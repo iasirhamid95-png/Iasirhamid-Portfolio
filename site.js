@@ -1,57 +1,91 @@
-// Site Rendering Engine
 document.addEventListener("DOMContentLoaded", () => {
-    // Render About Section
-    const aboutTextContainer = document.getElementById("about-text");
-    if (aboutTextContainer && siteData.about) {
-        aboutTextContainer.innerHTML = siteData.about.bioParagraphs
+    const data =
+        window.PORTFOLIO_CONTENT ||
+        window.siteData ||
+        (typeof siteData !== "undefined" ? siteData : {});
+
+    if (!data) return;
+
+    const profile = data.profile || {};
+    const about = data.about || {};
+
+    // Hero Section
+    const heroTitle = document.getElementById("hero-title");
+    const heroDesc = document.getElementById("hero-desc");
+
+    if (heroTitle && profile.heroTitle) {
+        heroTitle.textContent = profile.heroTitle;
+    }
+
+    if (heroDesc && profile.heroDescription) {
+        heroDesc.textContent = profile.heroDescription;
+    }
+
+    // About Section
+    const aboutText = document.getElementById("about-text");
+
+    if (aboutText && Array.isArray(about.bioParagraphs)) {
+        aboutText.innerHTML = about.bioParagraphs
             .map(p => `<p>${p}</p>`)
             .join("");
     }
 
-    const aboutStatsContainer = document.getElementById("about-stats");
-    if (aboutStatsContainer && siteData.about) {
-        aboutStatsContainer.innerHTML = siteData.about.stats
+    // Statistics
+    const aboutStats = document.getElementById("about-stats");
+
+    if (aboutStats && Array.isArray(about.stats)) {
+        aboutStats.innerHTML = about.stats
             .map(stat => `
                 <div class="stat-box">
-                    <h3>${stat.value}</h3>
-                    <p>${stat.label}</p>
+                    <h3>${stat.value || ""}</h3>
+                    <p>${stat.label || ""}</p>
                 </div>
-            `).join("");
+            `)
+            .join("");
     }
 
-    // Render Services Section
-    const servicesContainer = document.getElementById("services-grid");
-    if (servicesContainer && siteData.services) {
-        servicesContainer.innerHTML = siteData.services
+    // Services
+    const services = document.getElementById("services-grid");
+
+    if (services && Array.isArray(data.services)) {
+        services.innerHTML = data.services
             .map(service => `
                 <div class="service-card">
-                    <i class="${service.icon}"></i>
-                    <h3>${service.title}</h3>
-                    <p>${service.description}</p>
+                    <i class="${service.icon || ""}"></i>
+                    <h3>${service.title || ""}</h3>
+                    <p>${service.description || ""}</p>
                 </div>
-            `).join("");
+            `)
+            .join("");
     }
 
-    // Render Portfolio Section
-    const portfolioContainer = document.getElementById("portfolio-grid");
-    if (portfolioContainer && siteData.portfolio) {
-        portfolioContainer.innerHTML = siteData.portfolio
+    // Portfolio Projects
+    const portfolio = document.getElementById("portfolio-grid");
+
+    if (portfolio && Array.isArray(data.portfolio)) {
+        portfolio.innerHTML = data.portfolio
             .map(item => `
                 <div class="portfolio-item">
-                    <h3>${item.title}</h3>
-                    <p>${item.description}</p>
+                    <h3>${item.title || ""}</h3>
+                    <p>${item.description || ""}</p>
                 </div>
-            `).join("");
+            `)
+            .join("");
     }
 
-    // Render Contact Links
-    const contactContainer = document.getElementById("contact-links");
-    if (contactContainer && siteData.contactLinks) {
-        contactContainer.innerHTML = siteData.contactLinks
+    // Contact Links
+    const contactLinks = document.getElementById("contact-links");
+
+    if (contactLinks && Array.isArray(data.contactLinks)) {
+        contactLinks.innerHTML = data.contactLinks
             .map(link => `
-                <a href="${link.url}" ${link.target ? `target="${link.target}"` : ''} class="contact-btn">
-                    <i class="${link.icon}"></i> ${link.text}
+                <a href="${link.url || "#"}"
+                   ${link.target ? `target="${link.target}" rel="noopener noreferrer"` : ""}
+                   class="contact-btn">
+                    <i class="${link.icon || ""}"></i>
+                    ${link.text || ""}
                 </a>
-            `).join("");
+            `)
+            .join("");
     }
 });
