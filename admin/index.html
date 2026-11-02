@@ -79,7 +79,22 @@ button{
 </style>
 </head>
 
-<body>
+<body><div id="auth-panel" style="max-width:420px;margin:70px auto;padding:25px;background:#111827;border:1px solid #b89b35;border-radius:12px;">
+  <h2 style="color:#ffd700;margin-bottom:15px;">Super Admin Login</h2>
+  <p style="color:#94a3b8;margin-bottom:15px;">Sign in to manage your portfolio.</p>
+
+  <form id="login-form">
+    <label>Email Address</label>
+    <input id="login-email" type="email" autocomplete="username" required>
+
+    <label>Password</label>
+    <input id="login-password" type="password" autocomplete="current-password" required>
+
+    <button type="submit" style="margin-top:18px;width:100%;">Secure Login</button>
+  </form>
+
+  <p id="login-message" style="color:#f5d978;margin-top:12px;font-size:13px;"></p>
+</div>
 
 <header>
 <h2>IASIR HAMID / ADMIN</h2>
@@ -475,6 +490,92 @@ render();
 
 </script>
 
-</body>
+<script>
+(function () {
+  const authPanel = document.getElementById("auth-panel");
+  const header = document.querySelector("header");
+  const dashboard = document.querySelector(".container");
+  const message = document.getElementById("login-message");
+  const form = document.getElementById("login-form");
+
+  header.style.display = "none";
+  dashboard.style.display = "none";
+
+  if (!window.supabase || !window.SUPABASE_CONFIG) {
+    message.textContent = "Supabase configuration could not load.";
+    return;
+  }
+
+  const client = window.supabase.createClient(
+    window.SUPABASE_CONFIG.url,
+    window.SUPABASE_CONFIG.publishableKey
+  );
+
+  async function verifyAdmin(user) {
+    if (!user) return false;
+
+    const { data, error } = await client
+      .from("site_admins")
+      .select("user_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (error || !data) {
+      await client.auth.signOut();
+      message.textContent = "Access denied. Admin permission required.";
+      return false;
+    }
+
+    authPanel.style.display = "none";
+    header.style.display = "flex";
+    dashboard.style.display = "block";
+
+    if (!document.getElementById("logout-button")) {
+      const btn = document.createElement("button");
+      btn.id = "logout-button";
+      btn.textContent = "Logout";
+      btn.onclick = async () => {
+        await client.auth.signOut();
+        location.reload();
+      };
+      header.appendChild(btn);
+    }
+
+    return true;
+  }
+
+  form.addEventListener("submit", async function (event) {
+    event.preventDefault();
+    message.textContent = "Signing in...";
+
+    const { data, error } = await client.auth.signInWithPassword({
+      email: document.getElementById("login-email").value.trim(),
+      password: document.getElementById("login-password").value
+    });
+
+    if (error) {
+      message.textContent = "Login failed: " + error.message;
+      return;
+    }
+
+    const allowed = await verifyAdmin(data.user);
+
+    if (!allowed) {
+      message.textContent = "This account is not authorized as admin.";
+    }
+  });
+
+  client.auth.getSession().then(({ data, error }) => {
+    if (error) {
+      message.textContent = "Could not check login session.";
+      return;
+    }
+
+    if (data.session) {
+      verifyAdmin(data.session.user);
+    }
+  });
+})();
+</script></body>
 </html>
     
