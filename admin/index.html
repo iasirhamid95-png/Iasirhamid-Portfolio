@@ -172,210 +172,306 @@ and redeploying the website.
 <script src="../content.js"></script>
 
 <script>
-let data =
-JSON.parse(localStorage.getItem("iasirPortfolioContent") || "null")
-|| JSON.parse(JSON.stringify(window.PORTFOLIO_CONTENT));
 
 const $ = id => document.getElementById(id);
 
-function esc(value){
- return String(value ?? "")
- .replace(/&/g,"&amp;")
- .replace(/"/g,"&quot;")
- .replace(/</g,"&lt;")
- .replace(/>/g,"&gt;");
+const defaultSiteData = {
+    profile: {
+        name: "Md. Iasir Hamid",
+        title: "",
+        heroTitle: "",
+        heroDescription: ""
+    },
+    about: {
+        bioParagraphs: [],
+        stats: []
+    },
+    services: [],
+    portfolio: [],
+    contactLinks: [],
+    contactHeading: "",
+    contactDescription: "",
+    footerText: ""
+};
+
+function clone(value) {
+    return JSON.parse(JSON.stringify(value));
 }
 
-function render(){
+const originalSource =
+    window.PORTFOLIO_CONTENT ||
+    window.siteData ||
+    (typeof siteData !== "undefined" ? siteData : null);
 
- $("heroBadge").value=data.heroBadge || "";
- $("heroTitle").value=data.heroTitle || "";
- $("heroDescription").value=data.heroDescription || "";
+function normalize(source) {
+    const d = clone(source || defaultSiteData);
 
- $("about0").value=data.aboutParagraphs?.[0] || "";
- $("about1").value=data.aboutParagraphs?.[1] || "";
+    // Support old flat-format saved data
+    if (!d.profile && (d.heroTitle || d.heroBadge)) {
+        d.profile = {
+            name: "",
+            title: d.heroBadge || "",
+            heroTitle: d.heroTitle || "",
+            heroDescription: d.heroDescription || ""
+        };
 
- $("contactHeading").value=data.contactHeading || "";
- $("contactDescription").value=data.contactDescription || "";
- $("footerText").value=data.footerText || "";
+        d.about = {
+            bioParagraphs: d.aboutParagraphs || [],
+            stats: d.stats || []
+        };
 
- $("stats").innerHTML="";
- (data.stats || []).forEach((x,i)=>{
- $("stats").insertAdjacentHTML("beforeend",`
- <div class="item">
- <label>Value</label>
- <input id="sv${i}" value="${esc(x.value)}">
- <label>Label</label>
- <input id="sl${i}" value="${esc(x.label)}">
- <button class="danger" onclick="removeItem('stats',${i})">Remove</button>
- </div>`);
- });
+        d.portfolio = d.projects || [];
+        d.contactLinks = (d.links || []).map(x => ({
+            icon: x.icon || "",
+            text: x.label || "",
+            url: x.url || ""
+        }));
+    }
 
- $("services").innerHTML="";
- (data.services || []).forEach((x,i)=>{
- $("services").insertAdjacentHTML("beforeend",`
- <div class="item">
- <label>Icon Class</label>
- <input id="si${i}" value="${esc(x.icon)}">
- <label>Service Title</label>
- <input id="st${i}" value="${esc(x.title)}">
- <label>Description</label>
- <textarea id="sd${i}">${esc(x.description)}</textarea>
- <button class="danger" onclick="removeItem('services',${i})">Remove</button>
- </div>`);
- });
+    d.profile = d.profile || {};
+    d.about = d.about || {};
 
- $("projects").innerHTML="";
- (data.projects || []).forEach((x,i)=>{
- $("projects").insertAdjacentHTML("beforeend",`
- <div class="item">
- <label>Project Title</label>
- <input id="pt${i}" value="${esc(x.title)}">
- <label>Description</label>
- <textarea id="pd${i}">${esc(x.description)}</textarea>
- <button class="danger" onclick="removeItem('projects',${i})">Remove</button>
- </div>`);
- });
+    d.about.bioParagraphs = Array.isArray(d.about.bioParagraphs)
+        ? d.about.bioParagraphs : [];
 
- $("links").innerHTML="";
- (data.links || []).forEach((x,i)=>{
- $("links").insertAdjacentHTML("beforeend",`
- <div class="item">
- <label>Link Label</label>
- <input id="ll${i}" value="${esc(x.label)}">
- <label>URL</label>
- <input id="lu${i}" value="${esc(x.url)}">
- <label>Icon Class</label>
- <input id="li${i}" value="${esc(x.icon)}">
- <button class="danger" onclick="removeItem('links',${i})">Remove</button>
- </div>`);
- });
+    d.about.stats = Array.isArray(d.about.stats)
+        ? d.about.stats : [];
+
+    d.services = Array.isArray(d.services) ? d.services : [];
+    d.portfolio = Array.isArray(d.portfolio) ? d.portfolio : [];
+    d.contactLinks = Array.isArray(d.contactLinks) ? d.contactLinks : [];
+
+    return d;
 }
 
-function collect(){
+let data = normalize(
+    JSON.parse(localStorage.getItem("iasirPortfolioContent") || "null")
+    || originalSource
+);
 
- data.heroBadge=$("heroBadge").value;
- data.heroTitle=$("heroTitle").value;
- data.heroDescription=$("heroDescription").value;
-
- data.aboutParagraphs=[
- $("about0").value,
- $("about1").value
- ];
-
- data.contactHeading=$("contactHeading").value;
- data.contactDescription=$("contactDescription").value;
- data.footerText=$("footerText").value;
-
- data.stats=(data.stats || []).map((x,i)=>({
- value:$("sv"+i).value,
- label:$("sl"+i).value
- }));
-
- data.services=(data.services || []).map((x,i)=>({
- icon:$("si"+i).value,
- title:$("st"+i).value,
- description:$("sd"+i).value
- }));
-
- data.projects=(data.projects || []).map((x,i)=>({
- title:$("pt"+i).value,
- description:$("pd"+i).value
- }));
-
- data.links=(data.links || []).map((x,i)=>({
- label:$("ll"+i).value,
- url:$("lu"+i).value,
- icon:$("li"+i).value
- }));
+function esc(value) {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
 }
 
-function save(){
- collect();
- localStorage.setItem(
- "iasirPortfolioContent",
- JSON.stringify(data)
- );
- alert("Changes saved in this browser!");
+function render() {
+    $("heroBadge").value = data.profile.title || "";
+    $("heroTitle").value = data.profile.heroTitle || "";
+    $("heroDescription").value = data.profile.heroDescription || "";
+
+    $("about0").value = data.about.bioParagraphs[0] || "";
+    $("about1").value = data.about.bioParagraphs[1] || "";
+
+    $("contactHeading").value = data.contactHeading || "";
+    $("contactDescription").value = data.contactDescription || "";
+    $("footerText").value = data.footerText || "";
+
+    $("stats").innerHTML = "";
+
+    data.about.stats.forEach((x, i) => {
+        $("stats").insertAdjacentHTML("beforeend", `
+            <div class="item">
+                <label>Value</label>
+                <input id="sv${i}" value="${esc(x.value)}">
+                <label>Label</label>
+                <input id="sl${i}" value="${esc(x.label)}">
+                <button class="danger" onclick="removeItem('stats',${i})">Remove</button>
+            </div>
+        `);
+    });
+
+    $("services").innerHTML = "";
+
+    data.services.forEach((x, i) => {
+        $("services").insertAdjacentHTML("beforeend", `
+            <div class="item">
+                <label>Icon Class</label>
+                <input id="si${i}" value="${esc(x.icon)}">
+                <label>Service Title</label>
+                <input id="st${i}" value="${esc(x.title)}">
+                <label>Description</label>
+                <textarea id="sd${i}">${esc(x.description)}</textarea>
+                <button class="danger" onclick="removeItem('services',${i})">Remove</button>
+            </div>
+        `);
+    });
+
+    $("projects").innerHTML = "";
+
+    data.portfolio.forEach((x, i) => {
+        $("projects").insertAdjacentHTML("beforeend", `
+            <div class="item">
+                <label>Project Title</label>
+                <input id="pt${i}" value="${esc(x.title)}">
+                <label>Description</label>
+                <textarea id="pd${i}">${esc(x.description)}</textarea>
+                <button class="danger" onclick="removeItem('portfolio',${i})">Remove</button>
+            </div>
+        `);
+    });
+
+    $("links").innerHTML = "";
+
+    data.contactLinks.forEach((x, i) => {
+        $("links").insertAdjacentHTML("beforeend", `
+            <div class="item">
+                <label>Link Label</label>
+                <input id="ll${i}" value="${esc(x.text)}">
+                <label>URL</label>
+                <input id="lu${i}" value="${esc(x.url)}">
+                <label>Icon Class</label>
+                <input id="li${i}" value="${esc(x.icon)}">
+                <button class="danger" onclick="removeItem('contactLinks',${i})">Remove</button>
+            </div>
+        `);
+    });
 }
 
-function exportData(){
+function collect() {
+    data.profile.title = $("heroBadge").value;
+    data.profile.heroTitle = $("heroTitle").value;
+    data.profile.heroDescription = $("heroDescription").value;
 
- collect();
+    data.about.bioParagraphs = [
+        $("about0").value,
+        $("about1").value
+    ];
 
- const output =
- "window.PORTFOLIO_CONTENT = " +
- JSON.stringify(data,null,2) + ";";
+    data.contactHeading = $("contactHeading").value;
+    data.contactDescription = $("contactDescription").value;
+    data.footerText = $("footerText").value;
 
- const blob=new Blob([output],{
- type:"text/javascript"
- });
+    data.about.stats = data.about.stats.map((x, i) => ({
+        ...x,
+        value: $("sv" + i).value,
+        label: $("sl" + i).value
+    }));
 
- const url=URL.createObjectURL(blob);
- const a=document.createElement("a");
+    data.services = data.services.map((x, i) => ({
+        ...x,
+        icon: $("si" + i).value,
+        title: $("st" + i).value,
+        description: $("sd" + i).value
+    }));
 
- a.href=url;
- a.download="content.js";
- a.click();
+    data.portfolio = data.portfolio.map((x, i) => ({
+        ...x,
+        title: $("pt" + i).value,
+        description: $("pd" + i).value
+    }));
 
- URL.revokeObjectURL(url);
+    data.contactLinks = data.contactLinks.map((x, i) => ({
+        ...x,
+        text: $("ll" + i).value,
+        url: $("lu" + i).value,
+        icon: $("li" + i).value
+    }));
 }
 
-function preview(){
- save();
- window.open("../index.html","_blank");
+function save() {
+    collect();
+
+    localStorage.setItem(
+        "iasirPortfolioContent",
+        JSON.stringify(data)
+    );
+
+    alert("Changes saved in this browser!");
 }
 
-function addStat(){
- collect();
- data.stats.push({value:"New",label:"Statistic"});
- render();
+function exportData() {
+    collect();
+
+    const output =
+        "window.siteData = window.PORTFOLIO_CONTENT = " +
+        JSON.stringify(data, null, 2) + ";";
+
+    const blob = new Blob([output], {
+        type: "text/javascript"
+    });
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+
+    a.href = url;
+    a.download = "content.js";
+    a.click();
+
+    URL.revokeObjectURL(url);
 }
 
-function addService(){
- collect();
- data.services.push({
- icon:"fa-solid fa-pen-nib",
- title:"New Service",
- description:"Service description"
- });
- render();
+function preview() {
+    save();
+    window.open("../index.html", "_blank");
 }
 
-function addProject(){
- collect();
- data.projects.push({
- title:"New Project",
- description:"Project description"
- });
- render();
+function addStat() {
+    collect();
+    data.about.stats.push({
+        value: "New",
+        label: "Statistic"
+    });
+    render();
 }
 
-function addLink(){
- collect();
- data.links.push({
- label:"New Link",
- url:"https://",
- icon:"fa-solid fa-link"
- });
- render();
+function addService() {
+    collect();
+    data.services.push({
+        icon: "fa-solid fa-pen-nib",
+        title: "New Service",
+        description: "Service description"
+    });
+    render();
 }
 
-function removeItem(type,index){
- collect();
- data[type].splice(index,1);
- render();
+function addProject() {
+    collect();
+    data.portfolio.push({
+        title: "New Project",
+        description: "Project description"
+    });
+    render();
 }
 
-function resetData(){
- if(confirm("Reset all changes?")){
- localStorage.removeItem("iasirPortfolioContent");
- data=JSON.parse(JSON.stringify(window.PORTFOLIO_CONTENT));
- render();
- }
+function addLink() {
+    collect();
+    data.contactLinks.push({
+        icon: "fa-solid fa-link",
+        text: "New Link",
+        url: "https://"
+    });
+    render();
+}
+
+function removeItem(type, index) {
+    collect();
+
+    if (type === "stats") {
+        data.about.stats.splice(index, 1);
+    } else if (type === "services") {
+        data.services.splice(index, 1);
+    } else if (type === "portfolio") {
+        data.portfolio.splice(index, 1);
+    } else if (type === "contactLinks") {
+        data.contactLinks.splice(index, 1);
+    }
+
+    render();
+}
+
+function resetData() {
+    if (confirm("Reset all changes?")) {
+        localStorage.removeItem("iasirPortfolioContent");
+        data = normalize(originalSource || defaultSiteData);
+        render();
+    }
 }
 
 render();
+
 </script>
 
 </body>
