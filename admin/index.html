@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Iasir Hamid | Admin Dashboard</title>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+ background:#090d16;
+ color:#e5e7eb;
+ font-family:Arial,sans-serif;
+ line-height:1.6;
+}
+header{
+ background:#111827;
+ padding:20px;
+ border-bottom:1px solid #b89b35;
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+}
+header h2{color:#ffd700;font-size:19px}
+.container{max-width:950px;margin:25px auto;padding:15px}
+.notice{
+ background:#211d11;
+ border:1px solid #806b24;
+ color:#f5d978;
+ padding:15px;
+ border-radius:8px;
+ margin-bottom:20px;
+ font-size:13px;
+}
+.panel{
+ background:#111827;
+ border:1px solid #293244;
+ border-radius:10px;
+ padding:20px;
+ margin-bottom:20px;
+}
+h3{color:#ffd700;margin-bottom:15px}
+label{
+ display:block;
+ margin:12px 0 6px;
+ color:#cbd5e1;
+ font-size:13px;
+}
+input,textarea{
+ width:100%;
+ padding:12px;
+ background:#090d16;
+ border:1px solid #39465c;
+ border-radius:6px;
+ color:white;
+ font-size:15px;
+}
+textarea{min-height:85px;resize:vertical}
+.item{
+ border:1px solid #303b4e;
+ padding:14px;
+ border-radius:8px;
+ margin:12px 0;
+}
+button{
+ padding:12px 16px;
+ border:0;
+ border-radius:6px;
+ background:#ffd700;
+ color:#111;
+ font-weight:bold;
+ margin:5px 5px 5px 0;
+ cursor:pointer;
+}
+.secondary{background:#263247;color:white}
+.danger{background:#702b2b;color:white}
+.small{font-size:12px;color:#94a3b8;margin-top:15px}
+</style>
+</head>
+
+<body>
+
+<header>
+<h2>IASIR HAMID / ADMIN</h2>
+<span>Portfolio CMS</span>
+</header>
+
+<div class="container">
+
+<div class="notice">
+<strong>Admin Dashboard Prototype</strong><br>
+এখানে Portfolio Website-এর content edit করতে পারবে।
+বর্তমানে Save করলে পরিবর্তন এই Browser-এ থাকবে।
+Export করে content.js হিসেবে প্রকাশের জন্য ব্যবহার করতে হবে।
+এটি এখনো secure login বা automatic publishing system নয়।
+</div>
+
+<div class="panel">
+<h3>Hero Section</h3>
+
+<label>Badge</label>
+<input id="heroBadge">
+
+<label>Headline</label>
+<textarea id="heroTitle"></textarea>
+
+<label>Description</label>
+<textarea id="heroDescription"></textarea>
+</div>
+
+<div class="panel">
+<h3>About Me</h3>
+
+<label>Paragraph 1</label>
+<textarea id="about0"></textarea>
+
+<label>Paragraph 2</label>
+<textarea id="about1"></textarea>
+</div>
+
+<div class="panel">
+<h3>Statistics Manager</h3>
+<div id="stats"></div>
+<button class="secondary" onclick="addStat()">+ Add Statistic</button>
+</div>
+
+<div class="panel">
+<h3>Services Manager</h3>
+<div id="services"></div>
+<button class="secondary" onclick="addService()">+ Add Service</button>
+</div>
+
+<div class="panel">
+<h3>Portfolio Projects</h3>
+<div id="projects"></div>
+<button class="secondary" onclick="addProject()">+ Add Project</button>
+</div>
+
+<div class="panel">
+<h3>Contact & Social Links</h3>
+
+<label>Contact Heading</label>
+<input id="contactHeading">
+
+<label>Contact Description</label>
+<textarea id="contactDescription"></textarea>
+
+<label>Footer Text</label>
+<input id="footerText">
+
+<div id="links"></div>
+<button class="secondary" onclick="addLink()">+ Add Link</button>
+</div>
+
+<div class="panel">
+<h3>Save & Export</h3>
+<button onclick="save()">Save Changes</button>
+<button class="secondary" onclick="exportData()">Export content.js</button>
+<button class="secondary" onclick="preview()">Preview Website</button>
+<button class="danger" onclick="resetData()">Reset</button>
+
+<p class="small">
+Note: This prototype does not provide secure authentication.
+Browser storage is local to this device.
+Publishing changes to the live website requires updating content.js
+and redeploying the website.
+</p>
+</div>
+
+</div>
+
+<script src="../content.js"></script>
+
+<script>
+let data =
+JSON.parse(localStorage.getItem("iasirPortfolioContent") || "null")
+|| JSON.parse(JSON.stringify(window.PORTFOLIO_CONTENT));
+
+const $ = id => document.getElementById(id);
+
+function esc(value){
+ return String(value ?? "")
+ .replace(/&/g,"&amp;")
+ .replace(/"/g,"&quot;")
+ .replace(/</g,"&lt;")
+ .replace(/>/g,"&gt;");
+}
+
+function render(){
+
+ $("heroBadge").value=data.heroBadge || "";
+ $("heroTitle").value=data.heroTitle || "";
+ $("heroDescription").value=data.heroDescription || "";
+
+ $("about0").value=data.aboutParagraphs?.[0] || "";
+ $("about1").value=data.aboutParagraphs?.[1] || "";
+
+ $("contactHeading").value=data.contactHeading || "";
+ $("contactDescription").value=data.contactDescription || "";
+ $("footerText").value=data.footerText || "";
+
+ $("stats").innerHTML="";
+ (data.stats || []).forEach((x,i)=>{
+ $("stats").insertAdjacentHTML("beforeend",`
+ <div class="item">
+ <label>Value</label>
+ <input id="sv${i}" value="${esc(x.value)}">
+ <label>Label</label>
+ <input id="sl${i}" value="${esc(x.label)}">
+ <button class="danger" onclick="removeItem('stats',${i})">Remove</button>
+ </div>`);
+ });
+
+ $("services").innerHTML="";
+ (data.services || []).forEach((x,i)=>{
+ $("services").insertAdjacentHTML("beforeend",`
+ <div class="item">
+ <label>Icon Class</label>
+ <input id="si${i}" value="${esc(x.icon)}">
+ <label>Service Title</label>
+ <input id="st${i}" value="${esc(x.title)}">
+ <label>Description</label>
+ <textarea id="sd${i}">${esc(x.description)}</textarea>
+ <button class="danger" onclick="removeItem('services',${i})">Remove</button>
+ </div>`);
+ });
+
+ $("projects").innerHTML="";
+ (data.projects || []).forEach((x,i)=>{
+ $("projects").insertAdjacentHTML("beforeend",`
+ <div class="item">
+ <label>Project Title</label>
+ <input id="pt${i}" value="${esc(x.title)}">
+ <label>Description</label>
+ <textarea id="pd${i}">${esc(x.description)}</textarea>
+ <button class="danger" onclick="removeItem('projects',${i})">Remove</button>
+ </div>`);
+ });
+
+ $("links").innerHTML="";
+ (data.links || []).forEach((x,i)=>{
+ $("links").insertAdjacentHTML("beforeend",`
+ <div class="item">
+ <label>Link Label</label>
+ <input id="ll${i}" value="${esc(x.label)}">
+ <label>URL</label>
+ <input id="lu${i}" value="${esc(x.url)}">
+ <label>Icon Class</label>
+ <input id="li${i}" value="${esc(x.icon)}">
+ <button class="danger" onclick="removeItem('links',${i})">Remove</button>
+ </div>`);
+ });
+}
+
+function collect(){
+
+ data.heroBadge=$("heroBadge").value;
+ data.heroTitle=$("heroTitle").value;
+ data.heroDescription=$("heroDescription").value;
+
+ data.aboutParagraphs=[
+ $("about0").value,
+ $("about1").value
+ ];
+
+ data.contactHeading=$("contactHeading").value;
+ data.contactDescription=$("contactDescription").value;
+ data.footerText=$("footerText").value;
+
+ data.stats=(data.stats || []).map((x,i)=>({
+ value:$("sv"+i).value,
+ label:$("sl"+i).value
+ }));
+
+ data.services=(data.services || []).map((x,i)=>({
+ icon:$("si"+i).value,
+ title:$("st"+i).value,
+ description:$("sd"+i).value
+ }));
+
+ data.projects=(data.projects || []).map((x,i)=>({
+ title:$("pt"+i).value,
+ description:$("pd"+i).value
+ }));
+
+ data.links=(data.links || []).map((x,i)=>({
+ label:$("ll"+i).value,
+ url:$("lu"+i).value,
+ icon:$("li"+i).value
+ }));
+}
+
+function save(){
+ collect();
+ localStorage.setItem(
+ "iasirPortfolioContent",
+ JSON.stringify(data)
+ );
+ alert("Changes saved in this browser!");
+}
+
+function exportData(){
+
+ collect();
+
+ const output =
+ "window.PORTFOLIO_CONTENT = " +
+ JSON.stringify(data,null,2) + ";";
+
+ const blob=new Blob([output],{
+ type:"text/javascript"
+ });
+
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement("a");
+
+ a.href=url;
+ a.download="content.js";
+ a.click();
+
+ URL.revokeObjectURL(url);
+}
+
+function preview(){
+ save();
+ window.open("../index.html","_blank");
+}
+
+function addStat(){
+ collect();
+ data.stats.push({value:"New",label:"Statistic"});
+ render();
+}
+
+function addService(){
+ collect();
+ data.services.push({
+ icon:"fa-solid fa-pen-nib",
+ title:"New Service",
+ description:"Service description"
+ });
+ render();
+}
+
+function addProject(){
+ collect();
+ data.projects.push({
+ title:"New Project",
+ description:"Project description"
+ });
+ render();
+}
+
+function addLink(){
+ collect();
+ data.links.push({
+ label:"New Link",
+ url:"https://",
+ icon:"fa-solid fa-link"
+ });
+ render();
+}
+
+function removeItem(type,index){
+ collect();
+ data[type].splice(index,1);
+ render();
+}
+
+function resetData(){
+ if(confirm("Reset all changes?")){
+ localStorage.removeItem("iasirPortfolioContent");
+ data=JSON.parse(JSON.stringify(window.PORTFOLIO_CONTENT));
+ render();
+ }
+}
+
+render();
+</script>
+
+</body>
+</html>
+    
