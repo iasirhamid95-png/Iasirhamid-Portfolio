@@ -454,9 +454,27 @@ async function loadDraft() {
     URL.revokeObjectURL(url);
 }
 
-function preview() {
-    save();
-    window.open("../index.html", "_blank");
+async function preview() {
+    const previewWindow = window.open("about:blank", "_blank");
+
+    if (!previewWindow) {
+        alert("Please allow pop-ups for draft preview.");
+        return;
+    }
+
+    const saved = await save();
+
+    if (!saved) {
+        previewWindow.close();
+        return;
+    }
+
+    previewWindow.sessionStorage.setItem(
+        "iasirPortfolioDraftPreview",
+        JSON.stringify(data)
+    );
+
+    previewWindow.location.href = "../index.html?preview=draft";
 }
 
 function addStat() {
