@@ -11,7 +11,7 @@ if (new URLSearchParams(window.location.search).get("preview") === "draft") {
     } catch (error) {
         console.error("Draft preview could not load:", error);
     }
-} ififif (!data) return;
+} if (!data) return;
 
     const profile = data.profile || {};
     const about = data.about || {};
