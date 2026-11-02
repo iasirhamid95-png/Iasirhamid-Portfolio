@@ -1,10 +1,17 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const data =
-        window.PORTFOLIO_CONTENT ||
-        window.siteData ||
-        (typeof siteData !== "undefined" ? siteData : {});
+   let data =
+    window.PORTFOLIO_CONTENT ||
+    window.siteData ||
+    (typeof siteData !== "undefined" ? siteData : {});
 
-    if (!data) return;
+if (new URLSearchParams(window.location.search).get("preview") === "draft") {
+    try {
+        const draft = sessionStorage.getItem("iasirPortfolioDraftPreview");
+        if (draft) data = JSON.parse(draft);
+    } catch (error) {
+        console.error("Draft preview could not load:", error);
+    }
+} ififif (!data) return;
 
     const profile = data.profile || {};
     const about = data.about || {};
