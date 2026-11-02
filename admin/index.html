@@ -415,7 +415,25 @@ async function save() {
     return true;
                                       }
 
-function exportData() {
+async function loadDraft() {
+    const client = window.portfolioSupabase;
+
+    const { data: row, error } = await client
+        .from("site_pages")
+        .select("draft_content")
+        .eq("slug", "home")
+        .maybeSingle();
+
+    if (error) {
+        alert("Draft load failed: " + error.message);
+        return;
+    }
+
+    if (row && row.draft_content) {
+        data = normalize(row.draft_content);
+        render();
+    }
+} exportData() {
     collect();
 
     const output =
@@ -526,7 +544,7 @@ render();
   const client = window.supabase.createClient(
     window.SUPABASE_CONFIG.url,
     window.SUPABASE_CONFIG.publishableKey
-  );
+  );window.portfolioSupabase = client;
 
   async function verifyAdmin(user) {
     if (!user) return false;
@@ -545,7 +563,7 @@ render();
 
     authPanel.style.display = "none";
     header.style.display = "flex";
-    dashboard.style.display = "block";
+    dashboard.style.display = "block";await loadDraft();
 
     if (!document.getElementById("logout-button")) {
       const btn = document.createElement("button");
