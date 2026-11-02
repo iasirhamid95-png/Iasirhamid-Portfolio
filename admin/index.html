@@ -387,16 +387,33 @@ function collect() {
     }));
 }
 
-function save() {
+async function save() {
     collect();
 
-    localStorage.setItem(
-        "iasirPortfolioContent",
-        JSON.stringify(data)
-    );
+    const client = window.portfolioSupabase;
+    if (!client) {
+        alert("Database is not connected. Please sign in again.");
+        return false;
+    }
 
-    alert("Changes saved in this browser!");
-}
+    const { error } = await client
+        .from("site_pages")
+        .upsert({
+            slug: "home",
+            title: "Home",
+            draft_content: data,
+            seo: {}
+        }, { onConflict: "slug" });
+
+    if (error) {
+        alert("Draft save failed: " + error.message);
+        return false;
+    }
+
+    localStorage.setItem("iasirPortfolioContent", JSON.stringify(data));
+    alert("Draft saved securely to Supabase.");
+    return true;
+                                      }
 
 function exportData() {
     collect();
