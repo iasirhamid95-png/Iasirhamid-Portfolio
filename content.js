@@ -1,5 +1,5 @@
 // Dynamic Site Content Data Store
-const siteData = {
+window.siteData = window.PORTFOLIO_CONTENT = {
     profile: {
         name: "Md. Iasir Hamid",
         title: "Founder & Senior Growth Strategist",
